@@ -58,8 +58,8 @@ jobs:
           xray_version="1.8.4"
           echo "Downloading xray ${xray_version} for ${{ matrix.arch }}..."
           cd /tmp
-          wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
-          unzip -o "Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
+          wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}.zip"
+          unzip -o "Xray-linux-${{ matrix.arch }}.zip"
           mv xray /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
           chmod +x /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
           cd /home/runner/work/x-ui/x-ui
