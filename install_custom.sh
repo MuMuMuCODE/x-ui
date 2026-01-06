@@ -161,23 +161,41 @@ install_x-ui() {
     local download_url="https://github.com/${GITHUB_USER}/${REPO_NAME}/releases/download/${CUSTOM_VERSION}/x-ui-linux-${arch}-${CUSTOM_VERSION}.tar.gz"
     echo -e "Download URL: ${download_url}"
     
-    wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${download_url}
+    wget -N --no-check-certificate -O x-ui.tar.gz ${download_url}
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Download failed, please check version number or network connection${plain}"
         exit 1
     fi
     
-    if [[ -e /usr/local/x-ui/ ]]; then
-        rm /usr/local/x-ui/ -rf
+    # 解压
+    mkdir -p x-ui-extract
+    tar zxvf x-ui.tar.gz -C x-ui-extract
+    rm x-ui.tar.gz -f
+    
+    # 检查是否有 release-package 目录
+    if [ -d "x-ui-extract/release-package" ]; then
+        cd x-ui-extract/release-package
+    else
+        cd x-ui-extract
     fi
     
-    tar zxvf x-ui-linux-${arch}.tar.gz
-    rm x-ui-linux-${arch}.tar.gz -f
-    cd release-package
     chmod +x x-ui bin/xray
-    cp -f x-ui.service /etc/systemd/system/
-    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/x-ui.sh
+    
+    # 复制所有文件到安装目录
+    mkdir -p /usr/local/x-ui
+    cp -r * /usr/local/x-ui/
+    
+    cd /usr/local/
+    rm -rf x-ui-extract
+    
+    # 设置权限
+    chmod +x /usr/local/x-ui/x-ui
+    chmod +x /usr/local/x-ui/bin/xray
     chmod +x /usr/local/x-ui/x-ui.sh
+    
+    # 配置服务
+    cp -f /usr/local/x-ui/x-ui.service /etc/systemd/system/
+    wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/x-ui.sh
     chmod +x /usr/bin/x-ui
     
     config_after_install
@@ -205,4 +223,6 @@ install_x-ui() {
 
 echo -e "${GREEN}Starting installation${plain}"
 install_x-ui $1
+
+
 
