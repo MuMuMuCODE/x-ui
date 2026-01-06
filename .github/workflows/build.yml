@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号 (例如: v1.0.0)'
+        description: 'Version (e.g., v1.0.0)'
         required: true
         default: ''
 
@@ -18,8 +18,6 @@ jobs:
     strategy:
       matrix:
         arch: [amd64, arm64]
-        exclude:
-          - arch: arm64
 
     steps:
       - name: Checkout code
@@ -40,6 +38,60 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
+      - name: Prepare bin directory
+        run: mkdir -p bin
+
+      - name: Check xray binary
+        id: check_xray
+        run: |
+          if [ -f "bin/xray-linux-${{ matrix.arch }}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "xray binary found locally"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "xray binary not found, will download"
+          fi
+
+      - name: Download xray binary
+        if: steps.check_xray.outputs.exists == 'false'
+        run: |
+          xray_version="1.8.4"
+          echo "Downloading xray ${xray_version} for ${{ matrix.arch }}..."
+          wget -q -O bin/xray-linux-${{ matrix.arch }} \
+            "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${matrix.arch}-v${xray_version}.zip"
+          
+          # Install unzip if needed
+          if ! command -v unzip &> /dev/null; then
+            apt-get update && apt-get install -y unzip
+          fi
+          
+          # Unzip and extract xray
+          unzip -j bin/xray-linux-${{ matrix.arch }} "xray" -d bin/
+          rm bin/xray-linux-${{ matrix.arch }}
+          chmod +x bin/xray-linux-${{ matrix.arch }}
+
+      - name: Download xray binary (alternative method)
+        if: steps.check_xray.outputs.exists == 'false'
+        run: |
+          # If previous method failed, try direct download
+          if [ ! -f "bin/xray-linux-${{ matrix.arch }}" ]; then
+            xray_version="1.8.4"
+            cd /tmp
+            wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
+            unzip -o "Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
+            mv xray /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
+            chmod +x /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
+            cd /home/runner/work/x-ui/x-ui
+          fi
+
+      - name: Verify xray binary
+        run: |
+          if [ ! -f "bin/xray-linux-${{ matrix.arch }}" ]; then
+            echo "Error: xray binary not found after download attempts"
+            exit 1
+          fi
+          echo "xray binary verified: $(ls -lh bin/xray-linux-${{ matrix.arch }})"
+
       - name: Build for ${{ matrix.arch }}
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.arch }} go build -o x-ui-${{ matrix.arch }} main.go
@@ -53,6 +105,10 @@ jobs:
           
           # 复制 xray 二进制文件
           cp bin/xray-linux-${{ matrix.arch }} release-package/bin/xray
+          
+          # 复制 geo 数据文件
+          cp bin/geoip.dat release-package/
+          cp bin/geosite.dat release-package/
           
           # 复制 web 目录
           cp -r web release-package/
@@ -121,15 +177,15 @@ jobs:
           tag_name: ${{ steps.version.outputs.VERSION }}
           name: x-ui ${{ steps.version.outputs.VERSION }}
           body: |
-            ## 安装说明
+            ## Installation
             ```bash
-            # 一键安装命令
+            # One-click install command
             bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}
             ```
             
-            ## 更新日志
-            - 自动构建版本
-            - 支持 amd64 和 arm64 架构
+            ## Changelog
+            - Auto-built version
+            - Supports amd64 and arm64 architectures
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -146,14 +202,14 @@ jobs:
 
       - name: Print download links
         run: |
-          echo "## 构建完成！"
+          echo "## Build Complete!"
           echo ""
-          echo "**版本**: ${{ steps.version.outputs.VERSION }}"
+          echo "**Version**: ${{ steps.version.outputs.VERSION }}"
           echo ""
-          echo "**下载链接**:"
+          echo "**Download Links**:"
           echo "- [x-ui-linux-amd64-${{ steps.version.outputs.VERSION }}.tar.gz](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }})"
           echo ""
-          echo "**一键安装命令**:"
+          echo "**One-click Install Command**:"
           echo "```bash"
           echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
           echo "```"
