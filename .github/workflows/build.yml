@@ -154,18 +154,16 @@ jobs:
           files: artifacts/**/*.tar.gz
           draft: false
           prerelease: false
+          generate_release_notes: true
           tag_name: ${{ steps.version.outputs.VERSION }}
           name: x-ui ${{ steps.version.outputs.VERSION }}
           body: |
             ## Installation
             ```bash
-            # One-click install command
             bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}
             ```
             
-            ## Changelog
-            - Auto-built version
-            - Supports amd64 and arm64 architectures
+            Auto-built version for amd64 and arm64 architectures.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -193,5 +191,7 @@ jobs:
           echo "```bash"
           echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
           echo "```"
+
+
 
 
