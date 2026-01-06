@@ -98,7 +98,7 @@ jobs:
 
       - name: Prepare release files
         run: |
-          mkdir release-package
+          mkdir -p release-package/bin
           
           # 复制 x-ui 主程序
           cp x-ui-${{ matrix.arch }} release-package/x-ui
