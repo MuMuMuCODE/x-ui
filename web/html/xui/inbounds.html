@@ -60,6 +60,9 @@
                                         <a-menu-item v-if="dbInbound.hasLink()" key="qrcode">
                                             <a-icon type="qrcode"></a-icon>二维码
                                         </a-menu-item>
+                                        <a-menu-item v-if="dbInbound.hasLink() && dbInbound.speedIp" key="speedQrcode">
+                                            <a-icon type="rocket"></a-icon>加速二维码
+                                        </a-menu-item>
                                         <a-menu-item key="edit">
                                             <a-icon type="edit"></a-icon>编辑
                                         </a-menu-item>
@@ -221,6 +224,9 @@
                     case "qrcode":
                         this.showQrcode(dbInbound);
                         break;
+                    case "speedQrcode":
+                        this.showSpeedQrcode(dbInbound);
+                        break;
                     case "edit":
                         this.openEditInbound(dbInbound);
                         break;
@@ -318,7 +324,21 @@
             },
             showQrcode(dbInbound) {
                 const link = dbInbound.genLink();
-                qrModal.show('二维码', link);
+                qrModal.show('二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
+            },
+            showSpeedQrcode(dbInbound) {
+                const link = dbInbound.genLink();
+                // 解析原始链接并替换为加速IP和端口
+                try {
+                    const url = new URL(link);
+                    const speedAddress = dbInbound.speedIp;
+                    const speedPort = dbInbound.speedPort || dbInbound.port;
+                    url.host = speedAddress;
+                    url.port = speedPort;
+                    qrModal.show('加速二维码', url.toString(), '{{ i18n "copy" }}', '', dbInbound.remark);
+                } catch (e) {
+                    this.$message.error('生成加速二维码失败: ' + e.message);
+                }
             },
             showInfo(dbInbound) {
                 infoModal.show(dbInbound);

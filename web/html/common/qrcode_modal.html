@@ -2,6 +2,9 @@
 <a-modal id="qrcode-modal" v-model="qrModal.visible" :title="qrModal.title"
          :closable="true" width="300px" :ok-text="qrModal.okText"
          cancel-text='{{ i18n "close" }}' :ok-button-props="{attrs:{id:'qr-modal-ok-btn'}}">
+    <div v-if="qrModal.remark" style="text-align: center; margin-bottom: 16px; font-size: 16px; font-weight: bold; color: #000000;">
+        [[ qrModal.remark ]]
+    </div>
     <canvas id="qrCode" style="width: 100%; height: 100%;"></canvas>
 </a-modal>
 
@@ -10,14 +13,16 @@
     const qrModal = {
         title: '',
         content: '',
+        remark: '',
         okText: '',
         copyText: '',
         qrcode: null,
         clipboard: null,
         visible: false,
-        show: function (title='', content='', okText='{{ i18n "copy" }}', copyText='') {
+        show: function (title='', content='', okText='{{ i18n "copy" }}', copyText='', remark='') {
             this.title = title;
             this.content = content;
+            this.remark = remark;
             this.okText = okText;
             if (ObjectUtil.isEmpty(copyText)) {
                 this.copyText = content;

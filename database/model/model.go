@@ -32,6 +32,8 @@ type Inbound struct {
 	Remark     string `json:"remark" form:"remark"`
 	Enable     bool   `json:"enable" form:"enable"`
 	ExpiryTime int64  `json:"expiryTime" form:"expiryTime"`
+	SpeedIp    string `json:"speedIp" form:"speedIp"`
+	SpeedPort  int    `json:"speedPort" form:"speedPort"`
 
 	// config part
 	Listen         string   `json:"listen" form:"listen"`
@@ -64,3 +66,4 @@ type Setting struct {
 	Key   string `json:"key" form:"key"`
 	Value string `json:"value" form:"value"`
 }
+

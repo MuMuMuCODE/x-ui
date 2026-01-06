@@ -36,6 +36,8 @@ class DBInbound {
         this.remark = "";
         this.enable = true;
         this.expiryTime = 0;
+        this.speedIp = "";
+        this.speedPort = 0;
 
         this.listen = "";
         this.port = 0;
