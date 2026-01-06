@@ -120,7 +120,7 @@ install_x-ui() {
         fi
     else
         last_version=$1
-        url="https://github.com/vaxilu/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
+        url="https://github.com/MuMuMuCODE/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
         echo -e "开始安装 x-ui v$1"
         wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
         if [[ $? -ne 0 ]]; then
@@ -135,7 +135,16 @@ install_x-ui() {
 
     tar zxvf x-ui-linux-${arch}.tar.gz
     rm x-ui-linux-${arch}.tar.gz -f
-    cd x-ui
+    
+    # 检查是否有 release-package 目录
+    if [ -d "release-package" ]; then
+        cd release-package
+        mkdir -p bin
+        mv xray bin/xray 2>/dev/null || true
+    else
+        cd x-ui
+    fi
+    
     chmod +x x-ui bin/xray-linux-${arch}
     cp -f x-ui.service /etc/systemd/system/
     wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/MuMuMuCODE/x-ui/main/x-ui.sh
