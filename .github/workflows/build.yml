@@ -57,32 +57,12 @@ jobs:
         run: |
           xray_version="1.8.4"
           echo "Downloading xray ${xray_version} for ${{ matrix.arch }}..."
-          wget -q -O bin/xray-linux-${{ matrix.arch }} \
-            "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${matrix.arch}-v${xray_version}.zip"
-          
-          # Install unzip if needed
-          if ! command -v unzip &> /dev/null; then
-            apt-get update && apt-get install -y unzip
-          fi
-          
-          # Unzip and extract xray
-          unzip -j bin/xray-linux-${{ matrix.arch }} "xray" -d bin/
-          rm bin/xray-linux-${{ matrix.arch }}
-          chmod +x bin/xray-linux-${{ matrix.arch }}
-
-      - name: Download xray binary (alternative method)
-        if: steps.check_xray.outputs.exists == 'false'
-        run: |
-          # If previous method failed, try direct download
-          if [ ! -f "bin/xray-linux-${{ matrix.arch }}" ]; then
-            xray_version="1.8.4"
-            cd /tmp
-            wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
-            unzip -o "Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
-            mv xray /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
-            chmod +x /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
-            cd /home/runner/work/x-ui/x-ui
-          fi
+          cd /tmp
+          wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
+          unzip -o "Xray-linux-${{ matrix.arch }}-v${xray_version}.zip"
+          mv xray /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
+          chmod +x /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
+          cd /home/runner/work/x-ui/x-ui
 
       - name: Verify xray binary
         run: |
@@ -103,8 +83,8 @@ jobs:
           # 复制 x-ui 主程序
           cp x-ui-${{ matrix.arch }} release-package/x-ui
           
-          # 复制 xray 二进制文件
-          cp bin/xray-linux-${{ matrix.arch }} release-package/bin/xray
+          # 复制 xray 二进制文件（保留架构后缀）
+          cp bin/xray-linux-${{ matrix.arch }} release-package/bin/xray-linux-${{ matrix.arch }}
           
           # 复制 geo 数据文件
           cp bin/geoip.dat release-package/
