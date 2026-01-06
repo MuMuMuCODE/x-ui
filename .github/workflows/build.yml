@@ -130,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: x-ui-${{ matrix.arch }}
-          path: x-ui-linux-${{ matrix.arch }}-${{ steps.version.outputs.VERSION }}.tar.gz
+          path: x-ui-linux-${{ matrix.arch }}.tar.gz
 
   release:
     needs: build
@@ -193,4 +193,5 @@ jobs:
           echo "```bash"
           echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
           echo "```"
+
 
