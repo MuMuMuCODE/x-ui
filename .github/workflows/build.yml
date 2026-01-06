@@ -1,0 +1,159 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        exclude:
+          - arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          if [ -z "$VERSION" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Build for ${{ matrix.arch }}
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.arch }} go build -o x-ui-${{ matrix.arch }} main.go
+
+      - name: Prepare release files
+        run: |
+          mkdir release-package
+          
+          # 复制 x-ui 主程序
+          cp x-ui-${{ matrix.arch }} release-package/x-ui
+          
+          # 复制 xray 二进制文件
+          cp bin/xray-linux-${{ matrix.arch }} release-package/bin/xray
+          
+          # 复制 web 目录
+          cp -r web release-package/
+          
+          # 复制配置文件
+          cp -r config release-package/
+          
+          # 复制数据库文件
+          cp -r database release-package/
+          
+          # 复制工具目录
+          cp -r util release-package/
+          
+          # 复制日志目录
+          cp -r logger release-package/
+          
+          # 复制 v2ui 目录
+          cp -r v2ui release-package/
+          
+          # 复制 xray 目录
+          cp -r xray release-package/
+          
+          # 复制服务文件
+          cp x-ui.service release-package/
+          
+          # 复制管理脚本
+          cp x-ui.sh release-package/
+          
+          # 复制 LICENSE 和 README
+          cp LICENSE release-package/
+          cp README.md release-package/
+
+      - name: Create tarball
+        run: |
+          cd release-package
+          tar -czvf ../x-ui-linux-${{ matrix.arch }}-${{ steps.version.outputs.VERSION }}.tar.gz *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x-ui-${{ matrix.arch }}
+          path: x-ui-linux-${{ matrix.arch }}-${{ steps.version.outputs.VERSION }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*.tar.gz
+          draft: false
+          prerelease: false
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: x-ui ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## 安装说明
+            ```bash
+            # 一键安装命令
+            bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}
+            ```
+            
+            ## 更新日志
+            - 自动构建版本
+            - 支持 amd64 和 arm64 架构
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Print download links
+        run: |
+          echo "## 构建完成！"
+          echo ""
+          echo "**版本**: ${{ steps.version.outputs.VERSION }}"
+          echo ""
+          echo "**下载链接**:"
+          echo "- [x-ui-linux-amd64-${{ steps.version.outputs.VERSION }}.tar.gz](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }})"
+          echo ""
+          echo "**一键安装命令**:"
+          echo "```bash"
+          echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
+          echo "```"
