@@ -63,6 +63,9 @@
                                         <a-menu-item v-if="dbInbound.hasLink() && dbInbound.speedIp" key="speedQrcode">
                                             <a-icon type="rocket"></a-icon>加速二维码
                                         </a-menu-item>
+                                        <a-menu-item v-if="dbInbound.isVMess && dbInbound.speedIp" key="clashSub">
+                                            <a-icon type="cloud-download"></a-icon>Clash订阅
+                                        </a-menu-item>
                                         <a-menu-item key="edit">
                                             <a-icon type="edit"></a-icon>编辑
                                         </a-menu-item>
@@ -227,6 +230,9 @@
                     case "speedQrcode":
                         this.showSpeedQrcode(dbInbound);
                         break;
+                    case "clashSub":
+                        this.downloadClashSub(dbInbound);
+                        break;
                     case "edit":
                         this.openEditInbound(dbInbound);
                         break;
@@ -333,6 +339,10 @@
             showSpeedQrcode(dbInbound) {
                 const link = dbInbound.genSpeedLink();
                 qrModal.show('加速二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
+            },
+            downloadClashSub(dbInbound) {
+                const url = `${basePath}xui/inbound/clash/${dbInbound.id}`;
+                window.open(url, '_blank');
             },
             showInfo(dbInbound) {
                 infoModal.show(dbInbound);
