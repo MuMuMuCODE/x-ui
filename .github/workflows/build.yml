@@ -74,7 +74,7 @@ jobs:
 
       - name: Build for ${{ matrix.arch }}
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.arch }} go build -o x-ui-${{ matrix.arch }} main.go
+          CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} go build -o x-ui-${{ matrix.arch }} main.go
 
       - name: Prepare release files
         run: |
@@ -195,3 +195,4 @@ jobs:
 
 
 
+
