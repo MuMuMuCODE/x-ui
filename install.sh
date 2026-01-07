@@ -56,7 +56,7 @@ if [[ -f /etc/os-release ]]; then
     os_version=$(awk -F'[= ."]' '/VERSION_ID/{print $3}' /etc/os-release)
 fi
 if [[ -z "$os_version" && -f /etc/lsb-release ]]; then
-    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/lsb-release)
+    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/os-release)
 fi
 
 if [[ x"${release}" == x"centos" ]]; then
@@ -132,57 +132,76 @@ install_x-ui() {
         fi
     fi
 
-    # 彻底清理旧安装（不管是文件还是目录）
+    # 彻底清理旧安装
     rm -rf /usr/local/x-ui
     rm -f /usr/local/x-ui-linux-${arch}.tar.gz
     
     echo "解压安装包..."
-    tar -zxvf x-ui-linux-${arch}.tar.gz || { echo -e "${red}解压失败，请检查压缩包${plain}"; exit 1; }
-    rm -f x-ui-linux-${arch}.tar.gz
-    
-    # 返回 /usr/local 目录
-    cd /usr/local/
-    
-    # 检查目录结构并进入正确的目录
-    if [ -d "release-package" ]; then
-        echo "检测到 release-package 目录"
-        cd release-package
-        mkdir -p bin
-        if [ -f "xray" ]; then
-            echo "移动 xray 到 bin/ 目录..."
-            mv xray bin/xray 2>/dev/null || true
-        fi
-    elif [ -d "x-ui" ]; then
-        echo "进入 x-ui 目录..."
-        cd x-ui
-    else
-        # 列出当前目录内容帮助调试
-        echo -e "${red}错误：解压后未找到 expected 目录结构${plain}"
-        echo "当前目录内容："
-        ls -la /usr/local/
+    mkdir -p /usr/local/x-ui-temp
+    tar -zxf /usr/local/x-ui-linux-${arch}.tar.gz -C /usr/local/x-ui-temp/
+    if [[ $? -ne 0 ]]; then
+        echo -e "${red}解压失败，请检查压缩包${plain}"
+        rm -rf /usr/local/x-ui-temp
         exit 1
     fi
     
+    # 检查解压后的目录结构
+    echo "检查目录结构..."
+    cd /usr/local/x-ui-temp/
+    
+    # 查找 x-ui 主程序所在目录
+    if [ -f "x-ui" ]; then
+        echo "主程序在当前目录，移动到 /usr/local/x-ui/"
+        mv /usr/local/x-ui-temp/x-ui /usr/local/x-ui/
+    elif [ -d "release-package" ] && [ -f "release-package/x-ui" ]; then
+        echo "主程序在 release-package 目录，移动到 /usr/local/x-ui/"
+        mv /usr/local/x-ui-temp/release-package/* /usr/local/x-ui/
+    else
+        # 列出目录内容帮助调试
+        echo -e "${red}错误：未找到 x-ui 主程序${plain}"
+        echo "当前目录结构："
+        find /usr/local/x-ui-temp -type f -name "x-ui" 2>/dev/null
+        ls -la /usr/local/x-ui-temp/
+        rm -rf /usr/local/x-ui-temp
+        exit 1
+    fi
+    
+    # 移动其他文件
+    for item in /usr/local/x-ui-temp/*; do
+        if [ -d "$item" ]; then
+            dirname=$(basename "$item")
+            if [ "$dirname" != "x-ui" ]; then
+                cp -r "$item" /usr/local/x-ui/ 2>/dev/null || true
+            fi
+        elif [ -f "$item" ]; then
+            filename=$(basename "$item")
+            if [ "$filename" != "x-ui" ]; then
+                cp "$item" /usr/local/x-ui/ 2>/dev/null || true
+            fi
+        fi
+    done
+    
+    # 清理临时目录
+    rm -rf /usr/local/x-ui-temp
+    rm -f /usr/local/x-ui-linux-${arch}.tar.gz
+    
     echo "设置权限..."
-    chmod +x x-ui
-    chmod +x bin/xray-linux-${arch}
+    chmod +x /usr/local/x-ui/x-ui
+    chmod +x /usr/local/x-ui/bin/xray-linux-${arch}
     
     echo "复制服务文件..."
-    cp -f x-ui.service /etc/systemd/system/
+    cp -f /usr/local/x-ui/x-ui.service /etc/systemd/system/
     
     echo "下载管理脚本..."
     wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/MuMuMuCODE/x-ui/main/x-ui.sh
     chmod +x /usr/bin/x-ui
     
-    echo "返回 /usr/local/x-ui 目录进行配置..."
-    cd /usr/local/x-ui
-    
-    config_after_install
-    
     echo "启动服务..."
     systemctl daemon-reload
     systemctl enable x-ui
     systemctl start x-ui
+    
+    config_after_install
     
     echo -e "${green}x-ui v${last_version}${plain} 安装完成，面板已启动，"
     echo -e ""
