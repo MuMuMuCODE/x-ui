@@ -56,7 +56,7 @@ if [[ -f /etc/os-release ]]; then
     os_version=$(awk -F'[= ."]' '/VERSION_ID/{print $3}' /etc/os-release)
 fi
 if [[ -z "$os_version" && -f /etc/lsb-release ]]; then
-    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/lsb-release)
+    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/os-release)
 fi
 
 if [[ x"${release}" == x"centos" ]]; then
@@ -113,8 +113,9 @@ install_x-ui() {
             exit 1
         fi
         echo -e "检测到 x-ui 最新版本：${last_version}，开始安装"
-        echo -e "https://github.com/MuMuMuCODE/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
         url="https://github.com/MuMuMuCODE/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
+        echo -e "下载地址：${url}"
+        wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
         if [[ $? -ne 0 ]]; then
             echo -e "${red}下载 x-ui 失败，请确保你的服务器能够下载 Github 的文件${plain}"
             exit 1
@@ -123,7 +124,7 @@ install_x-ui() {
         last_version=$1
         url="https://github.com/MuMuMuCODE/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
         echo -e "开始安装 x-ui v$1"
-        echo -e "https://github.com/MuMuMuCODE/x-ui/releases/download/${last_version}/x-ui-linux-${arch}.tar.gz"
+        echo -e "下载地址：${url}"
         wget -N --no-check-certificate -O /usr/local/x-ui-linux-${arch}.tar.gz ${url}
         if [[ $? -ne 0 ]]; then
             echo -e "${red}下载 x-ui v$1 失败，请确保此版本存在${plain}"
