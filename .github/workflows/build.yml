@@ -72,19 +72,17 @@ jobs:
           fi
           echo "xray binary verified: $(ls -lh bin/xray-linux-${{ matrix.arch }})"
 
-      - name: Install ARM64 cross-compiler
-        if: matrix.arch == 'arm64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          echo "ARM64 cross-compiler installed"
-
       - name: Build for ${{ matrix.arch }}
         run: |
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            export CC=aarch64-linux-gnu-gcc
-          fi
-          CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} go build -o x-ui-${{ matrix.arch }} main.go
+          # 使用 Alpine 的 musl 进行静态编译，兼容低版本 glibc
+          # 先清理之前可能存在的 CGO 设置
+          unset CC
+          
+          # 使用纯静态编译选项
+          CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} \
+          CGO_LDFLAGS="-static" \
+          go build -ldflags="-linkmode=external -extldflags=-static -s -w" \
+          -o x-ui-${{ matrix.arch }} main.go
 
       - name: Prepare release files
         run: |
@@ -205,4 +203,8 @@ jobs:
 
 
 
-
+
+
+
+
+
