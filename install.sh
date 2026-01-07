@@ -152,12 +152,15 @@ install_x-ui() {
     cd /usr/local/x-ui-temp/
     
     # 查找 x-ui 主程序所在目录
+    # 确保目标目录存在
+    mkdir -p /usr/local/x-ui/
+    
     if [ -f "x-ui" ]; then
         echo "主程序在当前目录，移动到 /usr/local/x-ui/"
         mv /usr/local/x-ui-temp/x-ui /usr/local/x-ui/
     elif [ -d "release-package" ] && [ -f "release-package/x-ui" ]; then
         echo "主程序在 release-package 目录，移动到 /usr/local/x-ui/"
-        mv /usr/local/x-ui-temp/release-package/* /usr/local/x-ui/
+        cp -r /usr/local/x-ui-temp/release-package/* /usr/local/x-ui/
     else
         # 列出目录内容帮助调试
         echo -e "${red}错误：未找到 x-ui 主程序${plain}"
