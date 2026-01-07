@@ -132,9 +132,8 @@ install_x-ui() {
         fi
     fi
 
-    # 彻底清理旧安装
+    # 彻底清理旧安装（只清理目录，不清理压缩包）
     rm -rf /usr/local/x-ui
-    rm -f /usr/local/x-ui-linux-${arch}.tar.gz
     
     echo "解压安装包..."
     mkdir -p /usr/local/x-ui-temp
@@ -144,6 +143,9 @@ install_x-ui() {
         rm -rf /usr/local/x-ui-temp
         exit 1
     fi
+    
+    # 解压成功后清理压缩包
+    rm -f /usr/local/x-ui-linux-${arch}.tar.gz
     
     # 检查解压后的目录结构
     echo "检查目录结构..."
