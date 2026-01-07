@@ -126,6 +126,8 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) error {
 	oldInbound.Remark = inbound.Remark
 	oldInbound.Enable = inbound.Enable
 	oldInbound.ExpiryTime = inbound.ExpiryTime
+	oldInbound.SpeedIp = inbound.SpeedIp
+	oldInbound.SpeedPort = inbound.SpeedPort
 	oldInbound.Listen = inbound.Listen
 	oldInbound.Port = inbound.Port
 	oldInbound.Protocol = inbound.Protocol
