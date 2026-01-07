@@ -76,20 +76,20 @@ jobs:
         run: |
           # 为不同架构选择正确的编译器
           if [ "${{ matrix.arch }}" = "arm64" ]; then
-            # ARM64: 使用交叉编译器 + 静态链接
-            sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+            # ARM64: 使用交叉编译器
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
             export CC=aarch64-linux-gnu-gcc
-            export CGO_LDFLAGS="-static"
-          else
-            # amd64: 使用 musl-gcc 进行静态编译
-            sudo apt-get install -y musl-tools
-            export CC=musl-gcc
-            export CGO_LDFLAGS="-static"
+            export CXX=aarch64-linux-gnu-g++
           fi
           
-          # 静态编译
+          # 安装静态库（用于静态链接 libgcc 和 libstdc++）
+          sudo apt-get install -y libtool libltdl-dev
+          
+          # 静态链接 libgcc 和 libstdc++，但保留 glibc 动态链接
+          # 这样可以减小二进制体积，同时保持兼容性
           CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} \
-          go build -ldflags="-linkmode=external -extldflags=-static -s -w" \
+          CGO_LDFLAGS="-static-libgcc -static-libstdc++" \
+          go build -ldflags="-linkmode=external -extldflags=-static-libgcc -static-libstdc++ -s -w" \
           -o x-ui-${{ matrix.arch }} main.go
 
       - name: Prepare release files
@@ -207,6 +207,7 @@ jobs:
           echo "```bash"
           echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
           echo "```"
+
 
 
 
