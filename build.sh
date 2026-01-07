@@ -35,7 +35,7 @@ mkdir -p x-ui-package
 # 编译 x-ui 主程序
 echo -e "${green}编译 x-ui 主程序...${plain}"
 cd /mnt/d/节点面板/x-ui
-CGO_ENABLED=0 GOOS=linux GOARCH=${arch} go build -o x-ui-package/x-ui main.go
+CGO_ENABLED=1 GOOS=linux GOARCH=${arch} go build -o x-ui-package/x-ui main.go
 if [[ $? -ne 0 ]]; then
     echo -e "${red}编译 x-ui 失败${plain}"
     exit 1
@@ -107,3 +107,4 @@ echo -e "下一步操作："
 echo -e "1. 上传 x-ui-linux-${arch}-${VERSION}.tar.gz 到 GitHub Releases"
 echo -e "2. 修改 install_custom.sh 中的 GITHUB_USER 和 REPO_NAME"
 echo -e "3. 分享安装命令: bash <(curl -Ls 你的raw文件链接)"
+
