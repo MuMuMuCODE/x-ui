@@ -23,11 +23,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
       - name: Get version
         id: version
         run: |
@@ -72,25 +67,57 @@ jobs:
           fi
           echo "xray binary verified: $(ls -lh bin/xray-linux-${{ matrix.arch }})"
 
-      - name: Build for ${{ matrix.arch }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build binary using Docker
         run: |
-          # 为不同架构选择正确的编译器
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            # ARM64: 使用交叉编译器
-            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            export CC=aarch64-linux-gnu-gcc
-            export CXX=aarch64-linux-gnu-g++
+          # 使用 Ubuntu 18.04 镜像确保 glibc 2.27 兼容性
+          docker run --rm \
+            --privileged \
+            multiarch/qemu-user-static --reset -p yes \
+            -v ${{ github.workspace }}:/workspace \
+            ubuntu:18.04 /bin/bash -c "
+              set -e
+              
+              # 安装编译工具链
+              apt-get update
+              apt-get install -y wget git gcc g++ make
+
+              # 安装 Go 1.21（兼容 Ubuntu 18.04）
+              wget -q https://go.dev/dl/go1.21.5.linux-amd64.tar.gz
+              rm -rf /usr/local/go
+              tar -C /usr/local -xzf go1.21.5.linux-amd64.tar.gz
+              rm go1.21.5.linux-amd64.tar.gz
+
+              # 设置 Go 环境
+              export PATH=/usr/local/go/bin:$PATH
+              export GOPATH=/tmp/gopath
+              export GO111MODULE=on
+
+              # 进入工作目录
+              cd /workspace
+
+              # 创建 Go 模块缓存
+              mkdir -p /tmp/gopath
+              export GOCACHE=/tmp/gocache
+
+              # 编译
+              CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} \
+                go build -ldflags='-linkmode=external -s -w' \
+                -o x-ui-${{ matrix.arch }} main.go
+
+              echo 'Build completed'
+            "
+
+      - name: Verify binary
+        run: |
+          if [ ! -f "x-ui-${{ matrix.arch }}" ]; then
+            echo "Error: binary not found after build"
+            exit 1
           fi
-          
-          # 安装静态库（用于静态链接 libgcc 和 libstdc++）
-          sudo apt-get install -y libtool libltdl-dev
-          
-          # 静态链接 libgcc 和 libstdc++，但保留 glibc 动态链接
-          # 这样可以减小二进制体积，同时保持兼容性
-          CGO_ENABLED=1 GOOS=linux GOARCH=${{ matrix.arch }} \
-          CGO_LDFLAGS="-static-libgcc -static-libstdc++" \
-          go build -ldflags="-linkmode=external -extldflags=-static-libgcc -static-libstdc++ -s -w" \
-          -o x-ui-${{ matrix.arch }} main.go
+          echo "Binary created: $(ls -lh x-ui-${{ matrix.arch }})"
+          file x-ui-${{ matrix.arch }}
 
       - name: Prepare release files
         run: |
@@ -202,19 +229,9 @@ jobs:
           echo ""
           echo "**Download Links**:"
           echo "- [x-ui-linux-amd64-${{ steps.version.outputs.VERSION }}.tar.gz](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }})"
+          echo "- [x-ui-linux-arm64-${{ steps.version.outputs.VERSION }}.tar.gz](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }})"
           echo ""
           echo "**One-click Install Command**:"
           echo "```bash"
           echo "bash <(curl -Ls https://raw.githubusercontent.com/${{ github.repository }}/main/install_custom.sh) ${{ steps.version.outputs.VERSION }}"
           echo "```"
-
-
-
-
-
-
-
-
-
-
-
