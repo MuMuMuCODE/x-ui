@@ -56,7 +56,7 @@ if [[ -f /etc/os-release ]]; then
     os_version=$(awk -F'[= ."]' '/VERSION_ID/{print $3}' /etc/os-release)
 fi
 if [[ -z "$os_version" && -f /etc/lsb-release ]]; then
-    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/os-release)
+    os_version=$(awk -F'[= ."]+' '/DISTRIB_RELEASE/{print $2}' /etc/lsb-release)
 fi
 
 if [[ x"${release}" == x"centos" ]]; then
@@ -103,7 +103,7 @@ config_after_install() {
 }
 
 install_x-ui() {
-    systemctl stop x-ui
+    systemctl stop x-ui 2>/dev/null
     cd /usr/local/
 
     if [ $# == 0 ]; then
@@ -132,37 +132,58 @@ install_x-ui() {
         fi
     fi
 
-    if [[ -e /usr/local/x-ui/ ]]; then
-        rm /usr/local/x-ui/ -rf
-    fi
-
-    tar zxvf x-ui-linux-${arch}.tar.gz
-    rm x-ui-linux-${arch}.tar.gz -f
+    # 彻底清理旧安装（不管是文件还是目录）
+    rm -rf /usr/local/x-ui
+    rm -f /usr/local/x-ui-linux-${arch}.tar.gz
     
-    # 检查是否有 release-package 目录
+    echo "解压安装包..."
+    tar -zxvf x-ui-linux-${arch}.tar.gz || { echo -e "${red}解压失败，请检查压缩包${plain}"; exit 1; }
+    rm -f x-ui-linux-${arch}.tar.gz
+    
+    # 返回 /usr/local 目录
+    cd /usr/local/
+    
+    # 检查目录结构并进入正确的目录
     if [ -d "release-package" ]; then
+        echo "检测到 release-package 目录"
         cd release-package
         mkdir -p bin
-        mv xray bin/xray 2>/dev/null || true
-    else
+        if [ -f "xray" ]; then
+            echo "移动 xray 到 bin/ 目录..."
+            mv xray bin/xray 2>/dev/null || true
+        fi
+    elif [ -d "x-ui" ]; then
+        echo "进入 x-ui 目录..."
         cd x-ui
+    else
+        # 列出当前目录内容帮助调试
+        echo -e "${red}错误：解压后未找到 expected 目录结构${plain}"
+        echo "当前目录内容："
+        ls -la /usr/local/
+        exit 1
     fi
     
-    chmod +x x-ui bin/xray-linux-${arch}
+    echo "设置权限..."
+    chmod +x x-ui
+    chmod +x bin/xray-linux-${arch}
+    
+    echo "复制服务文件..."
     cp -f x-ui.service /etc/systemd/system/
+    
+    echo "下载管理脚本..."
     wget --no-check-certificate -O /usr/bin/x-ui https://raw.githubusercontent.com/MuMuMuCODE/x-ui/main/x-ui.sh
-    chmod +x /usr/local/x-ui/x-ui.sh
     chmod +x /usr/bin/x-ui
+    
+    echo "返回 /usr/local/x-ui 目录进行配置..."
+    cd /usr/local/x-ui
+    
     config_after_install
-    #echo -e "如果是全新安装，默认网页端口为 ${green}54321${plain}，用户名和密码默认都是 ${green}admin${plain}"
-    #echo -e "请自行确保此端口没有被其他程序占用，${yellow}并且确保 54321 端口已放行${plain}"
-    #    echo -e "若想将 54321 修改为其它端口，输入 x-ui 命令进行修改，同样也要确保你修改的端口也是放行的"
-    #echo -e ""
-    #echo -e "如果是更新面板，则按你之前的方式访问面板"
-    #echo -e ""
+    
+    echo "启动服务..."
     systemctl daemon-reload
     systemctl enable x-ui
     systemctl start x-ui
+    
     echo -e "${green}x-ui v${last_version}${plain} 安装完成，面板已启动，"
     echo -e ""
     echo -e "x-ui 管理脚本使用方法: "
