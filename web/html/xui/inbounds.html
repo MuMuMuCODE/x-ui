@@ -64,7 +64,7 @@
                                             <a-icon type="rocket"></a-icon>加速二维码
                                         </a-menu-item>
                                         <a-menu-item v-if="dbInbound.isVMess && dbInbound.speedIp" key="clashSub">
-                                            <a-icon type="cloud-download"></a-icon>Clash订阅
+                                            <a-icon type="link"></a-icon>Clash订阅
                                         </a-menu-item>
                                         <a-menu-item key="edit">
                                             <a-icon type="edit"></a-icon>编辑
@@ -231,7 +231,7 @@
                         this.showSpeedQrcode(dbInbound);
                         break;
                     case "clashSub":
-                        this.downloadClashSub(dbInbound);
+                        this.copyClashSub(dbInbound);
                         break;
                     case "edit":
                         this.openEditInbound(dbInbound);
@@ -340,9 +340,19 @@
                 const link = dbInbound.genSpeedLink();
                 qrModal.show('加速二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
             },
-            downloadClashSub(dbInbound) {
-                const url = `${basePath}xui/inbound/clash/${dbInbound.id}`;
-                window.open(url, '_blank');
+            copyClashSub(dbInbound) {
+                const url = `${window.location.origin}${basePath}xui/inbound/clash/${dbInbound.id}`;
+                const textArea = document.createElement("textarea");
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    this.$message.success('已复制到剪切板');
+                } catch (err) {
+                    this.$message.error('复制失败');
+                }
+                document.body.removeChild(textArea);
             },
             showInfo(dbInbound) {
                 infoModal.show(dbInbound);
