@@ -331,18 +331,8 @@
                 qrModal.show('二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
             },
             showSpeedQrcode(dbInbound) {
-                const link = dbInbound.genLink();
-                // 解析原始链接并替换为加速IP和端口
-                try {
-                    const url = new URL(link);
-                    const speedAddress = dbInbound.speedIp;
-                    const speedPort = dbInbound.speedPort || dbInbound.port;
-                    url.host = speedAddress;
-                    url.port = speedPort;
-                    qrModal.show('加速二维码', url.toString(), '{{ i18n "copy" }}', '', dbInbound.remark);
-                } catch (e) {
-                    this.$message.error('生成加速二维码失败: ' + e.message);
-                }
+                const link = dbInbound.genSpeedLink();
+                qrModal.show('加速二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
             },
             showInfo(dbInbound) {
                 infoModal.show(dbInbound);

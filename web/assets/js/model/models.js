@@ -92,6 +92,13 @@ class DBInbound {
         }
         return address;
     }
+ 
+    get speedAddress() {
+        if (!ObjectUtil.isEmpty(this.speedIp) && this.speedIp !== "0.0.0.0") {
+            return this.speedIp;
+        }
+        return this.address;
+    }
 
     get _expiryTime() {
         if (this.expiryTime === 0) {
@@ -154,6 +161,12 @@ class DBInbound {
     genLink() {
         const inbound = this.toInbound();
         return inbound.genLink(this.address, this.remark);
+    }
+ 
+    genSpeedLink() {
+        const inbound = this.toInbound();
+        inbound.port = this.speedPort || this.port;
+        return inbound.genLink(this.speedAddress, this.remark);
     }
 }
 
