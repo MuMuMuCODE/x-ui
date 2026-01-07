@@ -166,7 +166,7 @@ class DBInbound {
     genSpeedLink() {
         const inbound = this.toInbound();
         inbound.port = this.speedPort || this.port;
-        return inbound.genLink(this.speedAddress, this.remark);
+        return inbound.genLink(this.speedAddress, this.remark, true);
     }
 }
 

@@ -881,7 +881,7 @@ class Inbound extends XrayCommonClass {
         this.sniffing = new Sniffing();
     }
 
-    genVmessLink(address='', remark='') {
+    genVmessLink(address='', remark='', forceAddress=false) {
         if (this.protocol !== Protocols.VMESS) {
             return '';
         }
@@ -923,7 +923,7 @@ class Inbound extends XrayCommonClass {
             path = this.stream.grpc.serviceName;
         }
 
-        if (this.stream.security === 'tls') {
+        if (!forceAddress && this.stream.security === 'tls') {
             if (!ObjectUtil.isEmpty(this.stream.tls.server)) {
                 address = this.stream.tls.server;
             }
@@ -945,7 +945,7 @@ class Inbound extends XrayCommonClass {
         return 'vmess://' + base64(JSON.stringify(obj, null, 2));
     }
 
-    genVLESSLink(address = '', remark='') {
+    genVLESSLink(address = '', remark='', forceAddress=false) {
         const settings = this.settings;
         const uuid = settings.vlesses[0].id;
         const port = this.port;
@@ -1003,8 +1003,13 @@ class Inbound extends XrayCommonClass {
 
         if (this.stream.security === 'tls') {
             if (!ObjectUtil.isEmpty(this.stream.tls.server)) {
-                address = this.stream.tls.server;
-                params.set("sni", address);
+                const sni = this.stream.tls.server;
+                if (!forceAddress) {
+                    address = sni;
+                    params.set("sni", address);
+                } else {
+                    params.set("sni", sni);
+                }
             }
         }
 
@@ -1021,27 +1026,27 @@ class Inbound extends XrayCommonClass {
         return url.toString();
     }
 
-    genSSLink(address='', remark='') {
+    genSSLink(address='', remark='', forceAddress=false) {
         let settings = this.settings;
         const server = this.stream.tls.server;
-        if (!ObjectUtil.isEmpty(server)) {
+        if (!forceAddress && !ObjectUtil.isEmpty(server)) {
             address = server;
         }
         return 'ss://' + safeBase64(settings.method + ':' + settings.password + '@' + address + ':' + this.port)
             + '#' + encodeURIComponent(remark);
     }
 
-    genTrojanLink(address='', remark='') {
+    genTrojanLink(address='', remark='', forceAddress=false) {
         let settings = this.settings;
         return `trojan://${settings.clients[0].password}@${address}:${this.port}#${encodeURIComponent(remark)}`;
     }
 
-    genLink(address='', remark='') {
+    genLink(address='', remark='', forceAddress=false) {
         switch (this.protocol) {
-            case Protocols.VMESS: return this.genVmessLink(address, remark);
-            case Protocols.VLESS: return this.genVLESSLink(address, remark);
-            case Protocols.SHADOWSOCKS: return this.genSSLink(address, remark);
-            case Protocols.TROJAN: return this.genTrojanLink(address, remark);
+            case Protocols.VMESS: return this.genVmessLink(address, remark, forceAddress);
+            case Protocols.VLESS: return this.genVLESSLink(address, remark, forceAddress);
+            case Protocols.SHADOWSOCKS: return this.genSSLink(address, remark, forceAddress);
+            case Protocols.TROJAN: return this.genTrojanLink(address, remark, forceAddress);
             default: return '';
         }
     }
