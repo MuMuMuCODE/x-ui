@@ -28,6 +28,14 @@ func NewSettingController(g *gin.RouterGroup) *SettingController {
 	return a
 }
 
+func (a *SettingController) SetSettingService(settingService service.SettingService) {
+	a.settingService = settingService
+}
+
+func (a *SettingController) SetUserService(userService service.UserService) {
+	a.userService = userService
+}
+
 func (a *SettingController) initRouter(g *gin.RouterGroup) {
 	g = g.Group("/setting")
 
