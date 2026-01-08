@@ -88,6 +88,7 @@ type Server struct {
 	xrayService    service.XrayService
 	settingService service.SettingService
 	inboundService service.InboundService
+	userService    service.UserService
 
 	cron *cron.Cron
 
