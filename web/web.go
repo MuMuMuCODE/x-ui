@@ -204,8 +204,14 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	g := engine.Group(basePath)
 
 	s.index = controller.NewIndexController(g)
+	s.index.SetUserService(s.userService)
+	s.index.SetInboundService(s.inboundService)
 	s.server = controller.NewServerController(g)
 	s.xui = controller.NewXUIController(g)
+
+	s.xui.SetUserService(s.userService)
+	s.xui.SetInboundService(s.inboundService)
+	s.xui.SetSettingService(s.settingService)
 
 	return engine, nil
 }

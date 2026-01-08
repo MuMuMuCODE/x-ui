@@ -341,7 +341,7 @@
                 qrModal.show('加速二维码', link, '{{ i18n "copy" }}', '', dbInbound.remark);
             },
             copyClashSub(dbInbound) {
-                const url = `${window.location.origin}${basePath}xui/inbound/clash/${dbInbound.id}`;
+                const url = `${window.location.origin}${basePath}clash/${dbInbound.id}`;
                 const textArea = document.createElement("textarea");
                 textArea.value = url;
                 document.body.appendChild(textArea);
