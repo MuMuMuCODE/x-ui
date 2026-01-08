@@ -30,7 +30,7 @@ rm -rf x-ui-package
 rm -f x-ui-linux-${arch}-${VERSION}.tar.gz
 
 # 创建工作目录
-mkdir -p x-ui-package
+mkdir -p x-ui-package/bin
 
 # 编译 x-ui 主程序
 echo -e "${green}编译 x-ui 主程序...${plain}"
@@ -48,6 +48,11 @@ if [[ ! -f x-ui-package/bin/xray ]]; then
     echo -e "${red}未找到 x-ray 二进制文件，请先准备 bin/xray-linux-${arch}${plain}"
     exit 1
 fi
+
+# 复制 geo 数据文件
+echo -e "${green}复制 geo 数据文件...${plain}"
+cp bin/geoip.dat x-ui-package/bin/
+cp bin/geosite.dat x-ui-package/bin/
 
 # 复制 web 目录
 echo -e "${green}复制 web 资源...${plain}"
@@ -107,4 +112,4 @@ echo -e "下一步操作："
 echo -e "1. 上传 x-ui-linux-${arch}-${VERSION}.tar.gz 到 GitHub Releases"
 echo -e "2. 修改 install_custom.sh 中的 GITHUB_USER 和 REPO_NAME"
 echo -e "3. 分享安装命令: bash <(curl -Ls 你的raw文件链接)"
-
+

@@ -56,6 +56,8 @@ jobs:
           wget -q "https://github.com/XTLS/Xray-core/releases/download/v${xray_version}/Xray-linux-${{ matrix.arch }}.zip"
           unzip -o "Xray-linux-${{ matrix.arch }}.zip"
           mv xray /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
+          mv geoip.dat /home/runner/work/x-ui/x-ui/bin/geoip.dat
+          mv geosite.dat /home/runner/work/x-ui/x-ui/bin/geosite.dat
           chmod +x /home/runner/work/x-ui/x-ui/bin/xray-linux-${{ matrix.arch }}
           cd /home/runner/work/x-ui/x-ui
 
@@ -118,8 +120,8 @@ jobs:
           cp bin/xray-linux-${{ matrix.arch }} release-package/bin/xray-linux-${{ matrix.arch }}
           
           # 复制 geo 数据文件
-          cp bin/geoip.dat release-package/
-          cp bin/geosite.dat release-package/
+          cp bin/geoip.dat release-package/bin/
+          cp bin/geosite.dat release-package/bin/
           
           # 复制 web 目录
           cp -r web release-package/
