@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 	"x-ui/logger"
@@ -256,6 +257,6 @@ func (a *IndexController) getClashSub(c *gin.Context) {
 		filename = fmt.Sprintf("clash_%s.yaml", inb.Remark)
 	}
 	c.Header("Content-Type", "application/x-yaml")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"clash_config.yaml\"; filename*=UTF-8''%s", url.PathEscape(filename)))
 	_, _ = c.Writer.Write(bs)
 }
